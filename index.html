@@ -201,6 +201,10 @@
   .tc-btn svg{width:16px; height:16px;}
   .tc-btn.delete-btn:hover{background:var(--danger-tint); color:var(--danger);}
   .tc-btn.danger-confirm{border:1px solid var(--danger); background:var(--danger-tint); color:var(--danger); width:auto; padding:0 10px; font-size:10px; font-weight:500;}
+  .drag-handle{cursor:grab; touch-action:none;}
+  .drag-handle:active{cursor:grabbing;}
+  .tile.dragging{opacity:.45;}
+  .tile.drag-over{border-color:var(--accent); box-shadow:0 0 0 2px var(--ring);}
 
   .empty-state{
     border:1.5px dashed var(--line-2); border-radius:14px; padding:40px 20px; text-align:center;
@@ -428,6 +432,40 @@ const linksCol = collection(db, "links");
   var toastEl = document.getElementById("toast");
   var STORAGE_KEY = "portal-ppo-unlocked";
 
+  /* ---------------- auto-logout setelah 10 menit tidak digunakan ---------------- */
+  var TIMEOUT_MS = 10 * 60 * 1000;
+  var LAST_ACTIVE_KEY = "portal-ppo-last-active";
+  var lastTouchWrite = 0;
+
+  function touchActivity(){
+    var now = Date.now();
+    if (now - lastTouchWrite < 5000) { return; }
+    lastTouchWrite = now;
+    try { localStorage.setItem(LAST_ACTIVE_KEY, String(now)); } catch(e){}
+  }
+  function isExpired(){
+    var last = null;
+    try { last = parseInt(localStorage.getItem(LAST_ACTIVE_KEY), 10); } catch(e){}
+    if (!last || isNaN(last)) { return true; }
+    return (Date.now() - last) > TIMEOUT_MS;
+  }
+  function forceLock(){
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+    try { localStorage.removeItem(LAST_ACTIVE_KEY); } catch(e){}
+    contentEl.style.display = "none";
+    lockEl.style.display = "flex";
+    pwInput.value = "";
+  }
+  ["click", "keydown", "mousemove", "scroll", "touchstart"].forEach(function(evt){
+    document.addEventListener(evt, touchActivity, { passive: true });
+  });
+  setInterval(function(){
+    if (contentEl.style.display !== "none" && isExpired()) { forceLock(); }
+  }, 15000);
+  document.addEventListener("visibilitychange", function(){
+    if (!document.hidden && contentEl.style.display !== "none" && isExpired()) { forceLock(); }
+  });
+
   function showToast(msg){
     toastEl.textContent = msg;
     toastEl.classList.add("show");
@@ -448,6 +486,8 @@ const linksCol = collection(db, "links");
     lockEl.style.display = "none";
     contentEl.style.display = "flex";
     if (remember) { try { localStorage.setItem(STORAGE_KEY, "1"); } catch (e) {} }
+    lastTouchWrite = 0;
+    touchActivity();
     if (!featuresStarted) { featuresStarted = true; initLinks(); }
   }
 
@@ -486,13 +526,20 @@ const linksCol = collection(db, "links");
     pwInput.focus();
   });
   lockAgainBtn.addEventListener("click", function(){
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
-    contentEl.style.display = "none";
-    lockEl.style.display = "flex";
-    pwInput.value = "";
+    forceLock();
     pwInput.focus();
   });
-  try { if (localStorage.getItem(STORAGE_KEY) === "1") { unlock(false); } } catch (e) {}
+  (function(){
+    var remembered = false;
+    try { remembered = localStorage.getItem(STORAGE_KEY) === "1"; } catch (e) {}
+    if (!remembered) { return; }
+    if (isExpired()) {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      try { localStorage.removeItem(LAST_ACTIVE_KEY); } catch (e) {}
+      return;
+    }
+    unlock(false);
+  })();
 
   /* ---------------- link list backed by Firestore ---------------- */
   var groupsEl = document.getElementById("groups");
@@ -518,6 +565,8 @@ const linksCol = collection(db, "links");
   var svgExt = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
   var svgEdit = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   var svgTrash = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
+  var svgGrip = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/></svg>';
+  var draggingId = null;
 
   function escapeHtml(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -588,6 +637,7 @@ const linksCol = collection(db, "links");
       if (isPlaceholder) { html += '<span class="no-url-badge mono">Belum ada URL</span>'; }
       html += '</div></a>';
       html += '<div class="tile-controls">' +
+        (query_ ? '' : '<button type="button" class="tc-btn drag-handle" data-id="' + item.id + '" aria-label="Geser untuk mengubah urutan" title="Geser untuk mengubah urutan">' + svgGrip + '</button>') +
         '<button type="button" class="tc-btn edit-btn" data-id="' + item.id + '" aria-label="Ubah link">' + svgEdit + '</button>' +
         '<button type="button" class="tc-btn delete-btn" data-id="' + item.id + '" aria-label="Hapus link">' + svgTrash + '</button>' +
       '</div>';
@@ -609,6 +659,62 @@ const linksCol = collection(db, "links");
         e.preventDefault();
         showToast('Link ini belum memiliki URL. Klik ikon pensil untuk mengisinya.');
       });
+    });
+
+    if (!query_) {
+      groupsEl.querySelectorAll(".tile").forEach(function(tileEl){
+        var handle = tileEl.querySelector(".drag-handle");
+        if (!handle) { return; }
+        handle.addEventListener("mousedown", function(){ tileEl.setAttribute("draggable", "true"); });
+        handle.addEventListener("touchstart", function(){ tileEl.setAttribute("draggable", "true"); }, { passive: true });
+        tileEl.addEventListener("dragstart", function(e){
+          draggingId = tileEl.getAttribute("data-id");
+          e.dataTransfer.effectAllowed = "move";
+          try { e.dataTransfer.setData("text/plain", draggingId); } catch (err) {}
+          tileEl.classList.add("dragging");
+        });
+        tileEl.addEventListener("dragend", function(){
+          tileEl.removeAttribute("draggable");
+          tileEl.classList.remove("dragging");
+          draggingId = null;
+          groupsEl.querySelectorAll(".tile.drag-over").forEach(function(t){ t.classList.remove("drag-over"); });
+        });
+        tileEl.addEventListener("dragover", function(e){
+          if (!draggingId) { return; }
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          tileEl.classList.add("drag-over");
+        });
+        tileEl.addEventListener("dragleave", function(){ tileEl.classList.remove("drag-over"); });
+        tileEl.addEventListener("drop", function(e){
+          e.preventDefault();
+          tileEl.classList.remove("drag-over");
+          var sourceId = draggingId;
+          var targetId = tileEl.getAttribute("data-id");
+          draggingId = null;
+          if (!sourceId || sourceId === targetId) { return; }
+          handleReorder(sourceId, targetId);
+        });
+      });
+    }
+  }
+
+  function handleReorder(sourceId, targetId){
+    var ids = currentDocs.map(function(item){ return item.id; });
+    var fromIdx = ids.indexOf(sourceId);
+    var toIdx = ids.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) { return; }
+    var newIds = ids.slice();
+    newIds.splice(fromIdx, 1);
+    var insertAt = newIds.indexOf(targetId);
+    newIds.splice(insertAt, 0, sourceId);
+    var tasks = newIds.map(function(id, idx){
+      return updateDoc(doc(db, "links", id), { order: (idx + 1) * 1000 });
+    });
+    Promise.all(tasks).then(function(){
+      showToast("Urutan link diperbarui.");
+    }).catch(function(err){
+      showToast("Gagal menyimpan urutan (" + err.message + ").");
     });
   }
 
