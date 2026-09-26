@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Portal Tautan PPO</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --bg:#f4f6f6; --surface:#ffffff; --field:#f7f8f9; --hover:#f0f3f4;
@@ -133,7 +134,10 @@
     display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:500; letter-spacing:.02em; flex:none;
   }
   .brand-name{font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .header-actions{display:flex; align-items:center; gap:8px; flex:none;}
+  .header-actions{display:flex; align-items:center; gap:6px; flex:none; overflow-x:auto; max-width:60vw; scrollbar-width:none;}
+  .header-actions::-webkit-scrollbar{display:none;}
+  .header-actions .theme-btn{width:36px; height:36px;}
+  @media (max-width:640px){ .header-actions .theme-btn{width:34px; height:34px;} }
 
   main.app-main{
     flex:1; width:100%; max-width:1120px; margin:0 auto;
@@ -205,6 +209,66 @@
   .drag-handle:active{cursor:grabbing;}
   .tile.dragging{opacity:.45;}
   .tile.drag-over{border-color:var(--accent); box-shadow:0 0 0 2px var(--ring);}
+
+  .tile{position:relative;}
+  .tile-quick{position:absolute; top:8px; right:8px; display:flex; gap:4px; z-index:2;}
+  .tq-btn{
+    width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+    border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--muted);
+    cursor:pointer; padding:0;
+  }
+  .tq-btn svg{width:13px; height:13px;}
+  .tq-btn:hover{color:var(--ink); border-color:var(--muted);}
+  .tq-btn.active{background:var(--accent-tint); color:var(--accent); border-color:var(--accent);}
+  .tq-btn.fav-btn.active{background:var(--accent-2-tint); color:var(--accent-2); border-color:var(--accent-2);}
+  .tile.pinned{border-color:var(--accent); box-shadow:0 0 0 2px var(--ring), 0 4px 16px var(--shadow);}
+  .tile-clicks{font-size:10.5px; color:var(--faint); margin-top:2px;}
+
+  .section-block{margin-bottom:22px;}
+  .section-title{
+    display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--muted); margin:0 2px 10px;
+  }
+  .section-title svg{width:14px; height:14px; flex:none;}
+
+  .tiles.layout-list{display:flex; flex-direction:column; gap:8px;}
+  .tiles.layout-list .tile{min-height:0;}
+  .tiles.layout-list .tile-link{padding:12px 14px; gap:12px;}
+  .tiles.layout-list .tile-avatar{width:34px; height:34px; font-size:14px;}
+  .tiles.layout-list .tile-desc{-webkit-line-clamp:1;}
+
+  #trash-modal .modal, #qr-modal .modal, #settings-modal .modal{max-width:520px;}
+  .trash-list{display:flex; flex-direction:column; gap:8px; max-height:50vh; overflow-y:auto;}
+  .trash-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--field);
+  }
+  .trash-item-name{font-size:13.5px; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .trash-item-actions{display:flex; gap:6px; flex:none;}
+  .trash-item-actions button{
+    height:32px; padding:0 10px; border-radius:8px; font-size:12px; cursor:pointer; border:1px solid var(--line-2);
+    background:var(--surface); color:var(--ink-2);
+  }
+  .trash-item-actions button.restore-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .trash-item-actions button.purge-btn:hover{border-color:var(--danger); color:var(--danger);}
+  .trash-empty{color:var(--muted); font-size:13.5px; text-align:center; padding:24px 0;}
+
+  #qr-canvas-wrap{display:flex; flex-direction:column; align-items:center; gap:14px; padding:8px 0 4px;}
+  #qr-canvas{border-radius:12px; border:1px solid var(--line); background:#fff; padding:12px; display:inline-flex;}
+  #qr-canvas img, #qr-canvas canvas{display:block;}
+  #qr-url-text{font-size:12px; color:var(--muted); word-break:break-all; text-align:center;}
+
+  .settings-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .settings-row label{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
+  .settings-row input[type="color"]{width:56px; height:38px; padding:2px; border-radius:8px; border:1px solid var(--line-2); background:var(--field); cursor:pointer;}
+  .layout-choice{display:flex; gap:8px;}
+  .layout-choice button{
+    flex:1; height:40px; border-radius:10px; border:1px solid var(--line-2); background:var(--surface);
+    color:var(--ink-2); font-size:13px; cursor:pointer;
+  }
+  .layout-choice button.active{border-color:var(--accent); background:var(--accent-tint); color:var(--accent); font-weight:600;}
+
+  #import-file-input{display:none;}
 
   .empty-state{
     border:1.5px dashed var(--line-2); border-radius:14px; padding:40px 20px; text-align:center;
@@ -294,6 +358,22 @@
         <div class="brand-name">Portal Tautan</div>
       </div>
       <div class="header-actions">
+        <button type="button" id="settings-btn" class="theme-btn icon-only" aria-label="Pengaturan tampilan" title="Pengaturan tampilan">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </button>
+        <button type="button" id="qr-btn" class="theme-btn icon-only" aria-label="Kode QR portal" title="Kode QR portal">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM14 20h3M20 14v3M17 20h4v-3"/></svg>
+        </button>
+        <button type="button" id="trash-btn" class="theme-btn icon-only" aria-label="Sampah link" title="Sampah link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        </button>
+        <button type="button" id="export-btn" class="theme-btn icon-only" aria-label="Ekspor daftar link" title="Ekspor daftar link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+        </button>
+        <button type="button" id="import-btn" class="theme-btn icon-only" aria-label="Impor daftar link" title="Impor daftar link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M4 3h16"/></svg>
+        </button>
+        <input type="file" id="import-file-input" accept="application/json" />
         <button type="button" id="theme-btn" class="theme-btn icon-only" aria-label="Ganti tema" title="Ganti tema"></button>
         <button type="button" id="lock-again" class="theme-btn icon-only" aria-label="Kunci ulang" title="Kunci ulang">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2.5"/></svg>
@@ -328,6 +408,64 @@
 
 <div id="toast" class="toast" role="status"></div>
 
+<div id="trash-modal" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-top">
+      <h3>Sampah Link</h3>
+      <button type="button" id="trash-close" class="modal-close" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin:0 0 14px;">Link yang dihapus disimpan di sini selama 30 hari sebelum dihapus permanen secara otomatis, sehingga bisa dipulihkan bila terhapus tidak sengaja.</p>
+    <div id="trash-list" class="trash-list"></div>
+  </div>
+</div>
+
+<div id="qr-modal" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-top">
+      <h3>Kode QR Portal</h3>
+      <button type="button" id="qr-close" class="modal-close" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div id="qr-canvas-wrap">
+      <div id="qr-canvas"></div>
+      <div id="qr-url-text" class="mono"></div>
+    </div>
+  </div>
+</div>
+
+<div id="settings-modal" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-top">
+      <h3>Pengaturan Tampilan</h3>
+      <button type="button" id="settings-close" class="modal-close" aria-label="Tutup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="settings-row">
+      <label for="s-brand" class="mono">Nama portal</label>
+      <input id="s-brand" maxlength="40" style="width:60%;height:38px;padding:0 10px;border-radius:8px;border:1px solid var(--line-2);background:var(--field);color:var(--ink);font-size:14px;" />
+    </div>
+    <div class="settings-row">
+      <label for="s-color" class="mono">Warna aksen</label>
+      <input id="s-color" type="color" />
+    </div>
+    <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:8px;">
+      <label class="mono">Tata letak</label>
+      <div class="layout-choice">
+        <button type="button" id="layout-grid-btn" data-layout="grid">Grid</button>
+        <button type="button" id="layout-list-btn" data-layout="list">Daftar</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:8px;">
+      <button type="button" id="settings-cancel">Batal</button>
+      <button type="button" id="settings-save">Simpan</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-backdrop" class="modal-backdrop">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-top">
@@ -349,6 +487,10 @@
         <label for="f-desc" class="mono">Deskripsi singkat</label>
         <textarea id="f-desc" maxlength="200" placeholder="Satu baris penjelasan link ini"></textarea>
       </div>
+      <div class="field">
+        <label for="f-category" class="mono">Kategori (opsional)</label>
+        <input id="f-category" maxlength="60" placeholder="contoh: Dashboard Operasional" />
+      </div>
       <div id="modal-err" class="alert" hidden role="alert"></div>
       <div class="modal-actions">
         <button type="button" id="modal-cancel">Batal</button>
@@ -361,8 +503,8 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy
+  getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc,
+  onSnapshot, query, orderBy, increment
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 /* ====================================================================
@@ -382,6 +524,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const linksCol = collection(db, "links");
+const settingsRef = doc(db, "settings", "general");
 
 (function(){
   "use strict";
@@ -488,7 +631,7 @@ const linksCol = collection(db, "links");
     if (remember) { try { localStorage.setItem(STORAGE_KEY, "1"); } catch (e) {} }
     lastTouchWrite = 0;
     touchActivity();
-    if (!featuresStarted) { featuresStarted = true; initLinks(); }
+    if (!featuresStarted) { featuresStarted = true; initLinks(); initSettings(); }
   }
 
   function attemptUnlock(){
@@ -556,7 +699,37 @@ const linksCol = collection(db, "links");
   var fName = document.getElementById("f-name");
   var fUrl = document.getElementById("f-url");
   var fDesc = document.getElementById("f-desc");
+  var fCategory = document.getElementById("f-category");
   var modalSave = document.getElementById("modal-save");
+
+  var trashBtn = document.getElementById("trash-btn");
+  var trashModal = document.getElementById("trash-modal");
+  var trashClose = document.getElementById("trash-close");
+  var trashListEl = document.getElementById("trash-list");
+
+  var qrBtn = document.getElementById("qr-btn");
+  var qrModal = document.getElementById("qr-modal");
+  var qrClose = document.getElementById("qr-close");
+  var qrCanvas = document.getElementById("qr-canvas");
+  var qrUrlText = document.getElementById("qr-url-text");
+
+  var settingsBtn = document.getElementById("settings-btn");
+  var settingsModal = document.getElementById("settings-modal");
+  var settingsClose = document.getElementById("settings-close");
+  var settingsCancel = document.getElementById("settings-cancel");
+  var settingsSave = document.getElementById("settings-save");
+  var sBrand = document.getElementById("s-brand");
+  var sColor = document.getElementById("s-color");
+  var layoutGridBtn = document.getElementById("layout-grid-btn");
+  var layoutListBtn = document.getElementById("layout-list-btn");
+
+  var exportBtn = document.getElementById("export-btn");
+  var importBtn = document.getElementById("import-btn");
+  var importFileInput = document.getElementById("import-file-input");
+
+  var TRASH_DAYS = 30;
+  var currentSettings = { brand: "Portal Tautan", accent: "", layout: "grid" };
+  var pendingLayoutChoice = "grid";
 
   var currentDocs = [];
   var editingId = null;
@@ -566,7 +739,52 @@ const linksCol = collection(db, "links");
   var svgEdit = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   var svgTrash = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
   var svgGrip = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/></svg>';
+  var svgPin = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
+  var svgStar = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
   var draggingId = null;
+
+  /* ---------------- favorit pribadi (localStorage per perangkat) ---------------- */
+  var FAV_KEY = "portal-ppo-favorites";
+  function getFavoriteSet(){
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch(e){ arr = []; }
+    return new Set(Array.isArray(arr) ? arr : []);
+  }
+  function toggleFavorite(id){
+    var set = getFavoriteSet();
+    if (set.has(id)) { set.delete(id); } else { set.add(id); }
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(set))); } catch(e){}
+    render();
+  }
+
+  /* ---------------- helper warna untuk kustomisasi aksen ---------------- */
+  function hexToRgb(hex){
+    var h = String(hex || "").replace("#", "");
+    if (h.length === 3) { h = h.split("").map(function(c){ return c + c; }).join(""); }
+    var num = parseInt(h, 16);
+    if (isNaN(num)) { return null; }
+    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+  }
+  function shadeColor(hex, amt){
+    var c = hexToRgb(hex);
+    if (!c) { return hex; }
+    function clamp(v){ return Math.max(0, Math.min(255, Math.round(v))); }
+    return "rgb(" + clamp(c.r + amt) + "," + clamp(c.g + amt) + "," + clamp(c.b + amt) + ")";
+  }
+  function tintColor(hex, alpha){
+    var c = hexToRgb(hex);
+    if (!c) { return hex; }
+    return "rgba(" + c.r + "," + c.g + "," + c.b + "," + alpha + ")";
+  }
+  function applyAccent(hex){
+    if (!hex || !hexToRgb(hex)) { return; }
+    var s = document.documentElement.style;
+    s.setProperty("--accent", hex);
+    s.setProperty("--accent-hover", shadeColor(hex, -22));
+    s.setProperty("--accent-active", shadeColor(hex, -38));
+    s.setProperty("--accent-tint", tintColor(hex, 0.13));
+    s.setProperty("--ring", tintColor(hex, 0.2));
+  }
 
   function escapeHtml(s){
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -581,11 +799,37 @@ const linksCol = collection(db, "links");
     onSnapshot(query(linksCol, orderBy("order", "asc")), function(snap){
       currentDocs = [];
       snap.forEach(function(d){ currentDocs.push({ id: d.id, data: d.data() }); });
+      purgeOldTrash();
       render();
+      renderTrash();
     }, function(err){
       footnoteEl.textContent = "Gagal memuat daftar link. Periksa konfigurasi Firebase di kode halaman ini. (" + err.message + ")";
       groupsEl.innerHTML = '<div class="empty-state">Tidak dapat terhubung ke database. Pastikan firebaseConfig sudah diisi dengan benar dan Firestore rules sudah dipublikasikan.</div>';
     });
+  }
+
+  function purgeOldTrash(){
+    var cutoff = Date.now() - TRASH_DAYS * 24 * 60 * 60 * 1000;
+    currentDocs.forEach(function(item){
+      if (item.data.deletedAt && item.data.deletedAt < cutoff) {
+        deleteDoc(doc(db, "links", item.id)).catch(function(){});
+      }
+    });
+  }
+
+  function initSettings(){
+    onSnapshot(settingsRef, function(snap){
+      var d = snap.exists() ? snap.data() : {};
+      currentSettings = {
+        brand: d.brand || "Portal Tautan",
+        accent: d.accent || "",
+        layout: d.layout === "list" ? "list" : "grid"
+      };
+      var brandEls = document.querySelectorAll(".brand-name");
+      brandEls.forEach(function(el){ el.textContent = currentSettings.brand; });
+      if (currentSettings.accent) { applyAccent(currentSettings.accent); }
+      render();
+    }, function(){ /* biarkan pengaturan default bila gagal memuat */ });
   }
 
   searchEl.addEventListener("input", function(){
@@ -593,25 +837,70 @@ const linksCol = collection(db, "links");
     render();
   });
 
+  function tileHtml(item){
+    var d = item.data;
+    var url = d.url || "#";
+    var isPlaceholder = !d.url;
+    var initial = (d.name || "?").trim().charAt(0).toUpperCase() || "?";
+    var host = d.url ? hostOf(d.url) : "";
+    var isFav = getFavoriteSet().has(item.id);
+    var isPinned = !!d.pinned;
+    var clicks = d.clicks || 0;
+
+    var html = '<div class="tile' + (isPinned ? ' pinned' : '') + '" data-id="' + item.id + '">';
+    html += '<div class="tile-quick">' +
+      '<button type="button" class="tq-btn pin-btn' + (isPinned ? ' active' : '') + '" data-id="' + item.id + '" aria-label="' + (isPinned ? "Lepas sematan" : "Sematkan link") + '" title="' + (isPinned ? "Lepas sematan" : "Sematkan link") + '">' + svgPin + '</button>' +
+      '<button type="button" class="tq-btn fav-btn' + (isFav ? ' active' : '') + '" data-id="' + item.id + '" aria-label="' + (isFav ? "Hapus dari favorit saya" : "Tandai favorit saya") + '" title="' + (isFav ? "Hapus dari favorit saya" : "Tandai favorit saya") + '">' + svgStar + '</button>' +
+    '</div>';
+    html += '<a class="tile-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" data-placeholder="' + (isPlaceholder ? "1" : "0") + '" data-id="' + item.id + '">';
+    html += '<div class="tile-avatar mono">' + escapeHtml(initial) + '</div>';
+    html += '<div class="tile-body">';
+    html += '<div class="tile-name"><span>' + escapeHtml(d.name || "(tanpa nama)") + '</span>' + svgExt + '</div>';
+    if (d.desc) { html += '<div class="tile-desc">' + escapeHtml(d.desc) + '</div>'; }
+    if (host) { html += '<div class="tile-host mono">' + escapeHtml(host) + '</div>'; }
+    if (clicks > 0) { html += '<div class="tile-clicks mono">' + clicks + ' klik</div>'; }
+    if (isPlaceholder) { html += '<span class="no-url-badge mono">Belum ada URL</span>'; }
+    html += '</div></a>';
+    html += '<div class="tile-controls">' +
+      (query_ ? '' : '<button type="button" class="tc-btn drag-handle" data-id="' + item.id + '" aria-label="Geser untuk mengubah urutan" title="Geser untuk mengubah urutan">' + svgGrip + '</button>') +
+      '<button type="button" class="tc-btn edit-btn" data-id="' + item.id + '" aria-label="Ubah link">' + svgEdit + '</button>' +
+      '<button type="button" class="tc-btn delete-btn" data-id="' + item.id + '" aria-label="Hapus link">' + svgTrash + '</button>' +
+    '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function sectionHtml(title, items, layoutClass){
+    if (!items.length) { return ""; }
+    var html = '<div class="section-block">';
+    html += '<div class="section-title">' + escapeHtml(title) + ' · ' + items.length + '</div>';
+    html += '<div class="tiles' + (layoutClass ? ' ' + layoutClass : '') + '">';
+    items.forEach(function(item){ html += tileHtml(item); });
+    html += '</div></div>';
+    return html;
+  }
+
   function render(){
-    if (currentDocs.length === 0) {
+    var active = currentDocs.filter(function(item){ return !item.data.deletedAt; });
+
+    if (active.length === 0) {
       groupsEl.innerHTML = '<div class="empty-state">Belum ada link yang ditambahkan. Klik "Tambah Link" untuk mulai mengisi.</div>';
       countEl.hidden = true;
       footnoteEl.textContent = "Anda dapat menambah, mengubah, atau menghapus link langsung dari halaman ini. Perubahan langsung terlihat oleh semua pihak yang membuka halaman ini.";
       return;
     }
 
-    var filtered = currentDocs;
+    var filtered = active;
     if (query_) {
-      filtered = currentDocs.filter(function(item){
+      filtered = active.filter(function(item){
         var d = item.data;
-        var hay = ((d.name || "") + " " + (d.desc || "") + " " + hostOf(d.url || "")).toLowerCase();
+        var hay = ((d.name || "") + " " + (d.desc || "") + " " + (d.category || "") + " " + hostOf(d.url || "")).toLowerCase();
         return hay.indexOf(query_) !== -1;
       });
     }
 
     countEl.hidden = !query_;
-    if (query_) { countEl.textContent = "Menampilkan " + filtered.length + " dari " + currentDocs.length + " link"; }
+    if (query_) { countEl.textContent = "Menampilkan " + filtered.length + " dari " + active.length + " link"; }
 
     if (filtered.length === 0) {
       groupsEl.innerHTML = '<div class="empty-state">Tidak ada link yang cocok dengan pencarian "' + escapeHtml(query_) + '".</div>';
@@ -619,31 +908,37 @@ const linksCol = collection(db, "links");
       return;
     }
 
-    var html = '<div class="tiles">';
+    var layoutClass = currentSettings.layout === "list" ? "layout-list" : "";
+    var favSet = getFavoriteSet();
+    var pinned = [], favorites = [], byCategory = {}, categoryOrder = [];
     filtered.forEach(function(item){
       var d = item.data;
-      var url = d.url || "#";
-      var isPlaceholder = !d.url;
-      var initial = (d.name || "?").trim().charAt(0).toUpperCase() || "?";
-      var host = d.url ? hostOf(d.url) : "";
-
-      html += '<div class="tile" data-id="' + item.id + '">';
-      html += '<a class="tile-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" data-placeholder="' + (isPlaceholder ? "1" : "0") + '" data-id="' + item.id + '">';
-      html += '<div class="tile-avatar mono">' + escapeHtml(initial) + '</div>';
-      html += '<div class="tile-body">';
-      html += '<div class="tile-name"><span>' + escapeHtml(d.name || "(tanpa nama)") + '</span>' + svgExt + '</div>';
-      if (d.desc) { html += '<div class="tile-desc">' + escapeHtml(d.desc) + '</div>'; }
-      if (host) { html += '<div class="tile-host mono">' + escapeHtml(host) + '</div>'; }
-      if (isPlaceholder) { html += '<span class="no-url-badge mono">Belum ada URL</span>'; }
-      html += '</div></a>';
-      html += '<div class="tile-controls">' +
-        (query_ ? '' : '<button type="button" class="tc-btn drag-handle" data-id="' + item.id + '" aria-label="Geser untuk mengubah urutan" title="Geser untuk mengubah urutan">' + svgGrip + '</button>') +
-        '<button type="button" class="tc-btn edit-btn" data-id="' + item.id + '" aria-label="Ubah link">' + svgEdit + '</button>' +
-        '<button type="button" class="tc-btn delete-btn" data-id="' + item.id + '" aria-label="Hapus link">' + svgTrash + '</button>' +
-      '</div>';
-      html += '</div>';
+      if (d.pinned) { pinned.push(item); return; }
+      if (favSet.has(item.id)) { favorites.push(item); return; }
+      var cat = (d.category || "").trim() || "Lainnya";
+      if (!byCategory[cat]) { byCategory[cat] = []; categoryOrder.push(cat); }
+      byCategory[cat].push(item);
     });
-    html += '</div>';
+    categoryOrder.sort(function(a, b){
+      if (a === "Lainnya") { return 1; }
+      if (b === "Lainnya") { return -1; }
+      return a.localeCompare(b, "id");
+    });
+
+    var html = "";
+    html += sectionHtml("Disematkan", pinned, layoutClass);
+    html += sectionHtml("Favorit Saya", favorites, layoutClass);
+    var hasMultipleCategories = categoryOrder.length > 1 || (categoryOrder.length === 1 && categoryOrder[0] !== "Lainnya");
+    if (!hasMultipleCategories && categoryOrder.length <= 1) {
+      var onlyList = categoryOrder.length ? byCategory[categoryOrder[0]] : [];
+      html += '<div class="tiles' + (layoutClass ? ' ' + layoutClass : '') + '">';
+      onlyList.forEach(function(item){ html += tileHtml(item); });
+      html += '</div>';
+    } else {
+      categoryOrder.forEach(function(cat){
+        html += sectionHtml(cat, byCategory[cat], layoutClass);
+      });
+    }
     groupsEl.innerHTML = html;
 
     footnoteEl.textContent = "Anda dapat menambah, mengubah, atau menghapus link langsung dari halaman ini. Perubahan langsung terlihat oleh semua pihak yang membuka halaman ini.";
@@ -654,10 +949,33 @@ const linksCol = collection(db, "links");
     groupsEl.querySelectorAll(".delete-btn").forEach(function(btn){
       btn.addEventListener("click", function(){ handleDeleteClick(btn); });
     });
+    groupsEl.querySelectorAll(".pin-btn").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        var id = btn.getAttribute("data-id");
+        var found = currentDocs.find(function(item){ return item.id === id; });
+        var nextPinned = !(found && found.data.pinned);
+        updateDoc(doc(db, "links", id), { pinned: nextPinned }).catch(function(err){
+          showToast("Gagal menyematkan link (" + err.message + ").");
+        });
+      });
+    });
+    groupsEl.querySelectorAll(".fav-btn").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        toggleFavorite(btn.getAttribute("data-id"));
+      });
+    });
     groupsEl.querySelectorAll('.tile-link[data-placeholder="1"]').forEach(function(a){
       a.addEventListener("click", function(e){
         e.preventDefault();
         showToast('Link ini belum memiliki URL. Klik ikon pensil untuk mengisinya.');
+      });
+    });
+    groupsEl.querySelectorAll('.tile-link[data-placeholder="0"]').forEach(function(a){
+      a.addEventListener("click", function(){
+        var id = a.getAttribute("data-id");
+        updateDoc(doc(db, "links", id), { clicks: increment(1) }).catch(function(){});
       });
     });
 
@@ -722,8 +1040,8 @@ const linksCol = collection(db, "links");
     if (btn.dataset.confirming === "1") {
       var id = btn.getAttribute("data-id");
       btn.disabled = true;
-      deleteDoc(doc(db, "links", id)).then(function(){
-        showToast("Link dihapus.");
+      updateDoc(doc(db, "links", id), { deletedAt: Date.now() }).then(function(){
+        showToast("Link dipindahkan ke sampah. Bisa dipulihkan lewat ikon sampah di header.");
       }).catch(function(err){
         showToast("Gagal menghapus link (" + err.message + ").");
         btn.disabled = false;
@@ -742,6 +1060,154 @@ const linksCol = collection(db, "links");
     }, 3500);
   }
 
+  /* ---------------- sampah link (undo delete) ---------------- */
+  function renderTrash(){
+    var trashed = currentDocs.filter(function(item){ return !!item.data.deletedAt; });
+    if (!trashed.length) {
+      trashListEl.innerHTML = '<div class="trash-empty">Sampah kosong.</div>';
+      return;
+    }
+    trashed.sort(function(a, b){ return (b.data.deletedAt || 0) - (a.data.deletedAt || 0); });
+    var html = "";
+    trashed.forEach(function(item){
+      var d = item.data;
+      html += '<div class="trash-item">' +
+        '<span class="trash-item-name">' + escapeHtml(d.name || "(tanpa nama)") + '</span>' +
+        '<span class="trash-item-actions">' +
+          '<button type="button" class="restore-btn" data-id="' + item.id + '">Pulihkan</button>' +
+          '<button type="button" class="purge-btn" data-id="' + item.id + '">Hapus permanen</button>' +
+        '</span>' +
+      '</div>';
+    });
+    trashListEl.innerHTML = html;
+    trashListEl.querySelectorAll(".restore-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        updateDoc(doc(db, "links", btn.getAttribute("data-id")), { deletedAt: null }).then(function(){
+          showToast("Link dipulihkan.");
+        }).catch(function(err){ showToast("Gagal memulihkan (" + err.message + ")."); });
+      });
+    });
+    trashListEl.querySelectorAll(".purge-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        if (btn.dataset.confirming !== "1") {
+          btn.dataset.confirming = "1";
+          btn.textContent = "Yakin?";
+          setTimeout(function(){ btn.dataset.confirming = "0"; btn.textContent = "Hapus permanen"; }, 3000);
+          return;
+        }
+        deleteDoc(doc(db, "links", btn.getAttribute("data-id"))).then(function(){
+          showToast("Link dihapus permanen.");
+        }).catch(function(err){ showToast("Gagal menghapus (" + err.message + ")."); });
+      });
+    });
+  }
+  trashBtn.addEventListener("click", function(){ renderTrash(); trashModal.classList.add("show"); });
+  trashClose.addEventListener("click", function(){ trashModal.classList.remove("show"); });
+  trashModal.addEventListener("click", function(e){ if (e.target === trashModal) { trashModal.classList.remove("show"); } });
+
+  /* ---------------- kode QR portal ---------------- */
+  qrBtn.addEventListener("click", function(){
+    var url = window.location.origin + window.location.pathname;
+    qrUrlText.textContent = url;
+    qrModal.classList.add("show");
+    qrCanvas.innerHTML = "";
+    if (window.QRCode) {
+      try {
+        new window.QRCode(qrCanvas, { text: url, width: 220, height: 220, colorDark: "#12181f", colorLight: "#ffffff" });
+      } catch (e) {
+        qrUrlText.textContent = url + " (gagal membuat kode QR, salin tautan secara manual)";
+      }
+    } else {
+      qrUrlText.textContent = url + " (pustaka QR gagal dimuat, salin tautan secara manual)";
+    }
+  });
+  qrClose.addEventListener("click", function(){ qrModal.classList.remove("show"); });
+  qrModal.addEventListener("click", function(e){ if (e.target === qrModal) { qrModal.classList.remove("show"); } });
+
+  /* ---------------- pengaturan tampilan ---------------- */
+  function setLayoutChoiceUI(choice){
+    pendingLayoutChoice = choice;
+    layoutGridBtn.classList.toggle("active", choice === "grid");
+    layoutListBtn.classList.toggle("active", choice === "list");
+  }
+  settingsBtn.addEventListener("click", function(){
+    sBrand.value = currentSettings.brand || "";
+    sColor.value = currentSettings.accent || "#2f5233";
+    setLayoutChoiceUI(currentSettings.layout || "grid");
+    settingsModal.classList.add("show");
+  });
+  settingsClose.addEventListener("click", function(){ settingsModal.classList.remove("show"); });
+  settingsCancel.addEventListener("click", function(){ settingsModal.classList.remove("show"); });
+  settingsModal.addEventListener("click", function(e){ if (e.target === settingsModal) { settingsModal.classList.remove("show"); } });
+  layoutGridBtn.addEventListener("click", function(){ setLayoutChoiceUI("grid"); });
+  layoutListBtn.addEventListener("click", function(){ setLayoutChoiceUI("list"); });
+  settingsSave.addEventListener("click", function(){
+    var payload = {
+      brand: sBrand.value.trim() || "Portal Tautan",
+      accent: sColor.value || "",
+      layout: pendingLayoutChoice
+    };
+    settingsSave.disabled = true;
+    setDoc(settingsRef, payload, { merge: true }).then(function(){
+      settingsSave.disabled = false;
+      settingsModal.classList.remove("show");
+      showToast("Pengaturan tampilan disimpan.");
+    }).catch(function(err){
+      settingsSave.disabled = false;
+      showToast("Gagal menyimpan pengaturan (" + err.message + ").");
+    });
+  });
+
+  /* ---------------- ekspor / impor daftar link ---------------- */
+  exportBtn.addEventListener("click", function(){
+    var active = currentDocs.filter(function(item){ return !item.data.deletedAt; });
+    var payload = active.map(function(item){
+      var d = item.data;
+      return { name: d.name || "", url: d.url || "", desc: d.desc || "", category: d.category || "", pinned: !!d.pinned, order: d.order || 0 };
+    });
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "portal-ppo-links-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    showToast("Daftar link diekspor.");
+  });
+  importBtn.addEventListener("click", function(){ importFileInput.click(); });
+  importFileInput.addEventListener("change", function(){
+    var file = importFileInput.files && importFileInput.files[0];
+    if (!file) { return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      var items;
+      try { items = JSON.parse(String(reader.result)); } catch(e){ showToast("File JSON tidak valid."); importFileInput.value = ""; return; }
+      if (!Array.isArray(items)) { showToast("Format file harus berupa daftar (array) link."); importFileInput.value = ""; return; }
+      var valid = items.filter(function(it){ return it && it.name && it.url; });
+      if (!valid.length) { showToast("Tidak ada link valid (nama dan URL wajib) di file ini."); importFileInput.value = ""; return; }
+      var base = Date.now();
+      var tasks = valid.map(function(it, idx){
+        return addDoc(linksCol, {
+          name: String(it.name).slice(0, 80),
+          url: String(it.url).slice(0, 500),
+          desc: it.desc ? String(it.desc).slice(0, 200) : "",
+          category: it.category ? String(it.category).slice(0, 60) : "",
+          pinned: !!it.pinned,
+          order: base + idx
+        });
+      });
+      Promise.all(tasks).then(function(){
+        showToast(valid.length + " link berhasil diimpor.");
+        importFileInput.value = "";
+      }).catch(function(err){
+        showToast("Sebagian link gagal diimpor (" + err.message + ").");
+        importFileInput.value = "";
+      });
+    };
+    reader.readAsText(file);
+  });
+
   function openModal(id){
     editingId = id || null;
     modalErr.hidden = true;
@@ -752,6 +1218,7 @@ const linksCol = collection(db, "links");
       fName.value = d.name || "";
       fUrl.value = d.url || "";
       fDesc.value = d.desc || "";
+      fCategory.value = d.category || "";
     } else {
       modalTitle.textContent = "Tambah Link";
       modalForm.reset();
@@ -785,7 +1252,8 @@ const linksCol = collection(db, "links");
       return;
     }
     modalSave.disabled = true;
-    var payload = { name: name, url: url, desc: desc };
+    var category = fCategory.value.trim();
+    var payload = { name: name, url: url, desc: desc, category: category };
 
     var task;
     if (editingId) {
