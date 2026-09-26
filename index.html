@@ -186,6 +186,8 @@
     width:42px; height:42px; border-radius:11px; background:var(--accent-tint); color:var(--accent);
     display:flex; align-items:center; justify-content:center; font-weight:500; font-size:16px; flex:none;
   }
+  .tile-avatar-favicon img{width:22px; height:22px; object-fit:contain; border-radius:4px;}
+  .tiles.layout-list .tile-avatar-favicon img{width:18px; height:18px;}
   .tile-body{min-width:0; flex:1; display:flex; flex-direction:column; gap:4px;}
   .tile-name{display:flex; align-items:center; gap:6px; font-weight:600; font-size:15px; line-height:1.35;}
   .tile-name span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -853,7 +855,13 @@ const settingsRef = doc(db, "settings", "general");
       '<button type="button" class="tq-btn fav-btn' + (isFav ? ' active' : '') + '" data-id="' + item.id + '" aria-label="' + (isFav ? "Hapus dari favorit saya" : "Tandai favorit saya") + '" title="' + (isFav ? "Hapus dari favorit saya" : "Tandai favorit saya") + '">' + svgStar + '</button>' +
     '</div>';
     html += '<a class="tile-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" data-placeholder="' + (isPlaceholder ? "1" : "0") + '" data-id="' + item.id + '">';
-    html += '<div class="tile-avatar mono">' + escapeHtml(initial) + '</div>';
+    if (host) {
+      html += '<div class="tile-avatar mono tile-avatar-favicon" data-fallback="' + escapeHtml(initial) + '">' +
+        '<img src="https://www.google.com/s2/favicons?sz=64&domain=' + encodeURIComponent(host) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.textContent=this.parentNode.dataset.fallback;">' +
+      '</div>';
+    } else {
+      html += '<div class="tile-avatar mono">' + escapeHtml(initial) + '</div>';
+    }
     html += '<div class="tile-body">';
     html += '<div class="tile-name"><span>' + escapeHtml(d.name || "(tanpa nama)") + '</span>' + svgExt + '</div>';
     if (d.desc) { html += '<div class="tile-desc">' + escapeHtml(d.desc) + '</div>'; }
