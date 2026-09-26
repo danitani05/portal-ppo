@@ -239,7 +239,7 @@
   .tiles.layout-list .tile-avatar{width:34px; height:34px; font-size:14px;}
   .tiles.layout-list .tile-desc{-webkit-line-clamp:1;}
 
-  #trash-modal .modal, #qr-modal .modal, #settings-modal .modal{max-width:520px;}
+  #trash-modal .modal, #qr-modal .modal{max-width:520px;}
   .trash-list{display:flex; flex-direction:column; gap:8px; max-height:50vh; overflow-y:auto;}
   .trash-item{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -260,17 +260,17 @@
   #qr-canvas img, #qr-canvas canvas{display:block;}
   #qr-url-text{font-size:12px; color:var(--muted); word-break:break-all; text-align:center;}
 
-  .settings-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
-  .settings-row label{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
-  .settings-row input[type="color"]{width:56px; height:38px; padding:2px; border-radius:8px; border:1px solid var(--line-2); background:var(--field); cursor:pointer;}
-  .layout-choice{display:flex; gap:8px;}
-  .layout-choice button{
-    flex:1; height:40px; border-radius:10px; border:1px solid var(--line-2); background:var(--surface);
-    color:var(--ink-2); font-size:13px; cursor:pointer;
-  }
-  .layout-choice button.active{border-color:var(--accent); background:var(--accent-tint); color:var(--accent); font-weight:600;}
-
   #import-file-input{display:none;}
+
+  .cat-drag-handle{
+    width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+    border:none; background:transparent; color:var(--muted); cursor:grab; padding:0; flex:none;
+  }
+  .cat-drag-handle:active{cursor:grabbing;}
+  .cat-drag-handle:hover{color:var(--ink);}
+  .cat-drag-handle svg{width:13px; height:13px;}
+  .section-block.cat-dragging{opacity:.5;}
+  .section-block.cat-drag-over{outline:2px dashed var(--accent); outline-offset:6px; border-radius:12px;}
 
   .empty-state{
     border:1.5px dashed var(--line-2); border-radius:14px; padding:40px 20px; text-align:center;
@@ -360,9 +360,6 @@
         <div class="brand-name">Portal Tautan</div>
       </div>
       <div class="header-actions">
-        <button type="button" id="settings-btn" class="theme-btn icon-only" aria-label="Pengaturan tampilan" title="Pengaturan tampilan">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
-        </button>
         <button type="button" id="qr-btn" class="theme-btn icon-only" aria-label="Kode QR portal" title="Kode QR portal">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM14 20h3M20 14v3M17 20h4v-3"/></svg>
         </button>
@@ -438,36 +435,6 @@
   </div>
 </div>
 
-<div id="settings-modal" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-top">
-      <h3>Pengaturan Tampilan</h3>
-      <button type="button" id="settings-close" class="modal-close" aria-label="Tutup">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
-      </button>
-    </div>
-    <div class="settings-row">
-      <label for="s-brand" class="mono">Nama portal</label>
-      <input id="s-brand" maxlength="40" style="width:60%;height:38px;padding:0 10px;border-radius:8px;border:1px solid var(--line-2);background:var(--field);color:var(--ink);font-size:14px;" />
-    </div>
-    <div class="settings-row">
-      <label for="s-color" class="mono">Warna aksen</label>
-      <input id="s-color" type="color" />
-    </div>
-    <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:8px;">
-      <label class="mono">Tata letak</label>
-      <div class="layout-choice">
-        <button type="button" id="layout-grid-btn" data-layout="grid">Grid</button>
-        <button type="button" id="layout-list-btn" data-layout="list">Daftar</button>
-      </div>
-    </div>
-    <div class="modal-actions" style="margin-top:8px;">
-      <button type="button" id="settings-cancel">Batal</button>
-      <button type="button" id="settings-save">Simpan</button>
-    </div>
-  </div>
-</div>
-
 <div id="modal-backdrop" class="modal-backdrop">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-top">
@@ -505,7 +472,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, setDoc,
+  getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, increment
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
@@ -526,7 +493,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const linksCol = collection(db, "links");
-const settingsRef = doc(db, "settings", "general");
 
 (function(){
   "use strict";
@@ -633,7 +599,7 @@ const settingsRef = doc(db, "settings", "general");
     if (remember) { try { localStorage.setItem(STORAGE_KEY, "1"); } catch (e) {} }
     lastTouchWrite = 0;
     touchActivity();
-    if (!featuresStarted) { featuresStarted = true; initLinks(); initSettings(); }
+    if (!featuresStarted) { featuresStarted = true; initLinks(); }
   }
 
   function attemptUnlock(){
@@ -715,23 +681,11 @@ const settingsRef = doc(db, "settings", "general");
   var qrCanvas = document.getElementById("qr-canvas");
   var qrUrlText = document.getElementById("qr-url-text");
 
-  var settingsBtn = document.getElementById("settings-btn");
-  var settingsModal = document.getElementById("settings-modal");
-  var settingsClose = document.getElementById("settings-close");
-  var settingsCancel = document.getElementById("settings-cancel");
-  var settingsSave = document.getElementById("settings-save");
-  var sBrand = document.getElementById("s-brand");
-  var sColor = document.getElementById("s-color");
-  var layoutGridBtn = document.getElementById("layout-grid-btn");
-  var layoutListBtn = document.getElementById("layout-list-btn");
-
   var exportBtn = document.getElementById("export-btn");
   var importBtn = document.getElementById("import-btn");
   var importFileInput = document.getElementById("import-file-input");
 
   var TRASH_DAYS = 30;
-  var currentSettings = { brand: "Portal Tautan", accent: "", layout: "grid" };
-  var pendingLayoutChoice = "grid";
 
   var currentDocs = [];
   var editingId = null;
@@ -744,6 +698,8 @@ const settingsRef = doc(db, "settings", "general");
   var svgPin = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
   var svgStar = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
   var draggingId = null;
+  var draggingCategory = null;
+  var lastCategoryOrder = [];
 
   /* ---------------- favorit pribadi (localStorage per perangkat) ---------------- */
   var FAV_KEY = "portal-ppo-favorites";
@@ -757,35 +713,6 @@ const settingsRef = doc(db, "settings", "general");
     if (set.has(id)) { set.delete(id); } else { set.add(id); }
     try { localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(set))); } catch(e){}
     render();
-  }
-
-  /* ---------------- helper warna untuk kustomisasi aksen ---------------- */
-  function hexToRgb(hex){
-    var h = String(hex || "").replace("#", "");
-    if (h.length === 3) { h = h.split("").map(function(c){ return c + c; }).join(""); }
-    var num = parseInt(h, 16);
-    if (isNaN(num)) { return null; }
-    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
-  }
-  function shadeColor(hex, amt){
-    var c = hexToRgb(hex);
-    if (!c) { return hex; }
-    function clamp(v){ return Math.max(0, Math.min(255, Math.round(v))); }
-    return "rgb(" + clamp(c.r + amt) + "," + clamp(c.g + amt) + "," + clamp(c.b + amt) + ")";
-  }
-  function tintColor(hex, alpha){
-    var c = hexToRgb(hex);
-    if (!c) { return hex; }
-    return "rgba(" + c.r + "," + c.g + "," + c.b + "," + alpha + ")";
-  }
-  function applyAccent(hex){
-    if (!hex || !hexToRgb(hex)) { return; }
-    var s = document.documentElement.style;
-    s.setProperty("--accent", hex);
-    s.setProperty("--accent-hover", shadeColor(hex, -22));
-    s.setProperty("--accent-active", shadeColor(hex, -38));
-    s.setProperty("--accent-tint", tintColor(hex, 0.13));
-    s.setProperty("--ring", tintColor(hex, 0.2));
   }
 
   function escapeHtml(s){
@@ -817,21 +744,6 @@ const settingsRef = doc(db, "settings", "general");
         deleteDoc(doc(db, "links", item.id)).catch(function(){});
       }
     });
-  }
-
-  function initSettings(){
-    onSnapshot(settingsRef, function(snap){
-      var d = snap.exists() ? snap.data() : {};
-      currentSettings = {
-        brand: d.brand || "Portal Tautan",
-        accent: d.accent || "",
-        layout: d.layout === "list" ? "list" : "grid"
-      };
-      var brandEls = document.querySelectorAll(".brand-name");
-      brandEls.forEach(function(el){ el.textContent = currentSettings.brand; });
-      if (currentSettings.accent) { applyAccent(currentSettings.accent); }
-      render();
-    }, function(){ /* biarkan pengaturan default bila gagal memuat */ });
   }
 
   searchEl.addEventListener("input", function(){
@@ -878,10 +790,15 @@ const settingsRef = doc(db, "settings", "general");
     return html;
   }
 
-  function sectionHtml(title, items, layoutClass){
+  function sectionHtml(title, items, layoutClass, catKey){
     if (!items.length) { return ""; }
-    var html = '<div class="section-block">';
-    html += '<div class="section-title">' + escapeHtml(title) + ' · ' + items.length + '</div>';
+    var isCategory = catKey !== null && catKey !== undefined;
+    var html = '<div class="section-block"' + (isCategory ? ' data-category="' + escapeHtml(catKey) + '"' : '') + '>';
+    html += '<div class="section-title">';
+    if (isCategory) {
+      html += '<button type="button" class="cat-drag-handle" data-category="' + escapeHtml(catKey) + '" aria-label="Geser untuk mengubah urutan kategori" title="Geser untuk mengubah urutan kategori">' + svgGrip + '</button>';
+    }
+    html += '<span>' + escapeHtml(title) + ' · ' + items.length + '</span></div>';
     html += '<div class="tiles' + (layoutClass ? ' ' + layoutClass : '') + '">';
     items.forEach(function(item){ html += tileHtml(item); });
     html += '</div></div>';
@@ -916,7 +833,7 @@ const settingsRef = doc(db, "settings", "general");
       return;
     }
 
-    var layoutClass = currentSettings.layout === "list" ? "layout-list" : "";
+    var layoutClass = "";
     var favSet = getFavoriteSet();
     var pinned = [], favorites = [], byCategory = {}, categoryOrder = [];
     filtered.forEach(function(item){
@@ -927,15 +844,26 @@ const settingsRef = doc(db, "settings", "general");
       if (!byCategory[cat]) { byCategory[cat] = []; categoryOrder.push(cat); }
       byCategory[cat].push(item);
     });
+    function categoryOrderValue(cat){
+      var vals = byCategory[cat].map(function(item){
+        return typeof item.data.catOrder === "number" ? item.data.catOrder : null;
+      }).filter(function(v){ return v !== null; });
+      return vals.length ? Math.min.apply(null, vals) : null;
+    }
     categoryOrder.sort(function(a, b){
+      var oa = categoryOrderValue(a), ob = categoryOrderValue(b);
+      if (oa !== null && ob !== null) { return oa - ob; }
+      if (oa !== null) { return -1; }
+      if (ob !== null) { return 1; }
       if (a === "Lainnya") { return 1; }
       if (b === "Lainnya") { return -1; }
       return a.localeCompare(b, "id");
     });
+    lastCategoryOrder = categoryOrder.slice();
 
     var html = "";
-    html += sectionHtml("Disematkan", pinned, layoutClass);
-    html += sectionHtml("Favorit Saya", favorites, layoutClass);
+    html += sectionHtml("Disematkan", pinned, layoutClass, null);
+    html += sectionHtml("Favorit Saya", favorites, layoutClass, null);
     var hasMultipleCategories = categoryOrder.length > 1 || (categoryOrder.length === 1 && categoryOrder[0] !== "Lainnya");
     if (!hasMultipleCategories && categoryOrder.length <= 1) {
       var onlyList = categoryOrder.length ? byCategory[categoryOrder[0]] : [];
@@ -944,7 +872,7 @@ const settingsRef = doc(db, "settings", "general");
       html += '</div>';
     } else {
       categoryOrder.forEach(function(cat){
-        html += sectionHtml(cat, byCategory[cat], layoutClass);
+        html += sectionHtml(cat, byCategory[cat], layoutClass, cat);
       });
     }
     groupsEl.innerHTML = html;
@@ -1022,7 +950,68 @@ const settingsRef = doc(db, "settings", "general");
           handleReorder(sourceId, targetId);
         });
       });
+
+      groupsEl.querySelectorAll(".section-block[data-category]").forEach(function(sectionEl){
+        var catHandle = sectionEl.querySelector(".cat-drag-handle");
+        if (!catHandle) { return; }
+        catHandle.addEventListener("mousedown", function(){ sectionEl.setAttribute("draggable", "true"); });
+        catHandle.addEventListener("touchstart", function(){ sectionEl.setAttribute("draggable", "true"); }, { passive: true });
+        sectionEl.addEventListener("dragstart", function(e){
+          draggingCategory = sectionEl.getAttribute("data-category");
+          e.dataTransfer.effectAllowed = "move";
+          try { e.dataTransfer.setData("text/plain", draggingCategory); } catch (err) {}
+          sectionEl.classList.add("cat-dragging");
+        });
+        sectionEl.addEventListener("dragend", function(){
+          sectionEl.removeAttribute("draggable");
+          sectionEl.classList.remove("cat-dragging");
+          draggingCategory = null;
+          groupsEl.querySelectorAll(".section-block.cat-drag-over").forEach(function(s){ s.classList.remove("cat-drag-over"); });
+        });
+        sectionEl.addEventListener("dragover", function(e){
+          if (!draggingCategory) { return; }
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          sectionEl.classList.add("cat-drag-over");
+        });
+        sectionEl.addEventListener("dragleave", function(){ sectionEl.classList.remove("cat-drag-over"); });
+        sectionEl.addEventListener("drop", function(e){
+          e.preventDefault();
+          sectionEl.classList.remove("cat-drag-over");
+          var sourceCat = draggingCategory;
+          var targetCat = sectionEl.getAttribute("data-category");
+          draggingCategory = null;
+          if (!sourceCat || sourceCat === targetCat) { return; }
+          handleCategoryReorder(sourceCat, targetCat);
+        });
+      });
     }
+  }
+
+  function handleCategoryReorder(sourceCat, targetCat){
+    var cats = lastCategoryOrder.slice();
+    var fromIdx = cats.indexOf(sourceCat);
+    var toIdx = cats.indexOf(targetCat);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) { return; }
+    cats.splice(fromIdx, 1);
+    var insertAt = cats.indexOf(targetCat);
+    cats.splice(insertAt, 0, sourceCat);
+    var tasks = [];
+    cats.forEach(function(cat, idx){
+      var catVal = (idx + 1) * 1000;
+      currentDocs.forEach(function(item){
+        var itemCat = (item.data.category || "").trim() || "Lainnya";
+        if (itemCat === cat) {
+          tasks.push(updateDoc(doc(db, "links", item.id), { catOrder: catVal }));
+        }
+      });
+    });
+    if (!tasks.length) { return; }
+    Promise.all(tasks).then(function(){
+      showToast("Urutan kategori diperbarui.");
+    }).catch(function(err){
+      showToast("Gagal menyimpan urutan kategori (" + err.message + ").");
+    });
   }
 
   function handleReorder(sourceId, targetId){
@@ -1131,40 +1120,6 @@ const settingsRef = doc(db, "settings", "general");
   });
   qrClose.addEventListener("click", function(){ qrModal.classList.remove("show"); });
   qrModal.addEventListener("click", function(e){ if (e.target === qrModal) { qrModal.classList.remove("show"); } });
-
-  /* ---------------- pengaturan tampilan ---------------- */
-  function setLayoutChoiceUI(choice){
-    pendingLayoutChoice = choice;
-    layoutGridBtn.classList.toggle("active", choice === "grid");
-    layoutListBtn.classList.toggle("active", choice === "list");
-  }
-  settingsBtn.addEventListener("click", function(){
-    sBrand.value = currentSettings.brand || "";
-    sColor.value = currentSettings.accent || "#2f5233";
-    setLayoutChoiceUI(currentSettings.layout || "grid");
-    settingsModal.classList.add("show");
-  });
-  settingsClose.addEventListener("click", function(){ settingsModal.classList.remove("show"); });
-  settingsCancel.addEventListener("click", function(){ settingsModal.classList.remove("show"); });
-  settingsModal.addEventListener("click", function(e){ if (e.target === settingsModal) { settingsModal.classList.remove("show"); } });
-  layoutGridBtn.addEventListener("click", function(){ setLayoutChoiceUI("grid"); });
-  layoutListBtn.addEventListener("click", function(){ setLayoutChoiceUI("list"); });
-  settingsSave.addEventListener("click", function(){
-    var payload = {
-      brand: sBrand.value.trim() || "Portal Tautan",
-      accent: sColor.value || "",
-      layout: pendingLayoutChoice
-    };
-    settingsSave.disabled = true;
-    setDoc(settingsRef, payload, { merge: true }).then(function(){
-      settingsSave.disabled = false;
-      settingsModal.classList.remove("show");
-      showToast("Pengaturan tampilan disimpan.");
-    }).catch(function(err){
-      settingsSave.disabled = false;
-      showToast("Gagal menyimpan pengaturan (" + err.message + ").");
-    });
-  });
 
   /* ---------------- ekspor / impor daftar link ---------------- */
   exportBtn.addEventListener("click", function(){
